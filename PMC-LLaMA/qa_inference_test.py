@@ -24,6 +24,17 @@ import json
 # clear cache if getting CUDA out of memory error
 torch.cuda.empty_cache()
 
+
+# comment this out if your models are located elsewhere
+# Coen's Paths
+MODELDIR  = 'models'
+DATADIR = 'data'
+# Binh's path
+# MODELDIR = '/home/binh/Projects/Medical_LLM/PMC-LLaMA/models'
+# DATADIR = None
+
+PRECISION = torch.float32
+
 # instruction = "You're a doctor, kindly address the medical queries according to the patient's account. Answer with the best option directly."
 
 PROMPT_DICT = {
@@ -45,7 +56,7 @@ Response:"
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model-name-or-path', type=str, default="/home/binh/Projects/Medical_LLM/PMC-LLaMA/models/models--chaoyi-wu--PMC_LLaMA_7B/snapshots/6caf5c19bdcd157f9d9a7d374be66d7b61d75351") # change this to your actual directory
+    parser.add_argument('--model-name-or-path', type=str, default="chaoyi-wu/PMC_LLaMA_7B") # change this to your actual directory
     parser.add_argument('--write-dir', type=str, default="inferenced_result_dir")
     parser.add_argument('--dataset-name', type=str, default="test_4_options.jsonl") # download this from https://huggingface.co/datasets/axiong/pmc_llama_instructions
     parser.add_argument('--num-samples', type=int) # number of samples
@@ -53,7 +64,7 @@ def parse_args():
     return args
 
 
-def construct_spedical_tokens_dict() -> dict:
+def construct_spedical_tokens_dict(tokenizer) -> dict:
     DEFAULT_PAD_TOKEN = "[PAD]"
     DEFAULT_EOS_TOKEN = "</s>"
     DEFAULT_BOS_TOKEN = "<s>"
@@ -100,6 +111,7 @@ def inference_on_one(input_str: Sequence[str], model, tokenizer, generation_conf
       input_str,
       return_tensors='pt',
       padding=True,
+      add_special_tokens=True,
     )
 
     topk_output = model.generate(
@@ -134,7 +146,6 @@ def prepare_data(dataset: Sequence[dict], model, tokenizer) -> Sequence[dict]:
     return prepared_data
 
 
-
 if __name__ == '__main__':
     print('Starting script')
 
@@ -148,9 +159,9 @@ if __name__ == '__main__':
 
     print(f"\033[32mLoading Dataset\033[0m")
     if args.num_samples is None:
-        dataset = load_dataset('json', data_files = args.dataset_name, split="train")
+        dataset = load_dataset('json', data_files = args.dataset_name, split="train",cache_dir = DATADIR)
     else:
-        dataset = load_dataset('json', data_files = args.dataset_name, split=f"train[:{args.num_samples}]")
+        dataset = load_dataset('json', data_files = args.dataset_name, split=f"train[:{args.num_samples}]",cache_dir = DATADIR)
     print(f"Loaded {len(dataset)} samples")
 
     print(f"\033[32mPrepare Data\033[0m")
@@ -162,16 +173,26 @@ if __name__ == '__main__':
         exit(1)
 
     print(f"\033[32mLoad Checkpoint\033[0m")
-    model = transformers.LlamaForCausalLM.from_pretrained(args.model_name_or_path,
-                                                          device_map='auto')
+
+    model = transformers.LlamaForCausalLM.from_pretrained(
+    pretrained_model_name_or_path = args.model_name_or_path, 
+    force_download=False, 
+    cache_dir=MODELDIR, 
+    device_map="auto",  # Automatically splits the model across multiple GPUs
+    torch_dtype=PRECISION  # Use FP16 precision to reduce memory usage
+    )
+
     tokenizer = transformers.LlamaTokenizer.from_pretrained(
-        args.model_name_or_path,
-        model_max_length=400,
+        pretrained_model_name_or_path = args.model_name_or_path, 
+        force_download=False, 
+        cache_dir=MODELDIR,
+        model_max_length=512,
         padding_side="right",
         use_fast=False,
     )
 
-    special_tokens_dict = construct_spedical_tokens_dict()
+
+    special_tokens_dict = construct_spedical_tokens_dict(tokenizer)
     smart_tokenizer_and_embedding_resize(
         special_tokens_dict=special_tokens_dict,
         tokenizer=tokenizer,
@@ -182,7 +203,8 @@ if __name__ == '__main__':
     # generation_config = create_generation_config()
     generation_config = GenerationConfig(
             max_new_tokens=1000,
-            top_k=50
+            top_k=50,
+            do_sample=True,
     )
 
     os.makedirs(args.write_dir, exist_ok=True)

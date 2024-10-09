@@ -1,0 +1,16 @@
+Starting job , ID 513796
+
+ 
+ Run on dataset 
+ Started at Tue Oct  1 19:39:29 AWST 2024 
+ 
+ Starting script
+Using 3 GPU(s):
+ - NVIDIA A100-SXM4-40GB
+ - NVIDIA A100-SXM4-40GB
+ - NVIDIA A100-SXM4-40GB
+[32mLoading Dataset[0m
+Loaded 513999 samples
+[32mPrepare Data[0m
+[32mLoad Checkpoint[0m
+[32mRunning Inference[0m

@@ -1,0 +1,20 @@
+Starting job QA_Inference_13B, ID 523109
+
+ 
+ Started at Tue Oct  8 22:05:48 AWST 2024 
+ 
+ Starting script
+Using 2 GPU(s):
+ - NVIDIA A100-SXM4-40GB
+ - NVIDIA A100-SXM4-40GB
+[32mLoading Dataset[0m
+Loaded 1273 samples
+[32mPrepare Data[0m
+[32mLoad Checkpoint[0m
+[32mRunning Inference[0m
+Inference completed.
+ 
+ Finished at Wed Oct  9 05:48:50 AWST 2024 
+  
+ Total runtime: 27782 seconds 
+ 

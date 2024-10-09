@@ -1,0 +1,13 @@
+Starting job 7B10E_QA_Inference, ID 523114
+
+ 
+ Started at Tue Oct  8 22:11:34 AWST 2024 
+ 
+ Starting script
+Using 1 GPU(s):
+ - NVIDIA A100-SXM4-40GB
+[32mLoading Dataset[0m
+Loaded 1273 samples
+[32mPrepare Data[0m
+[32mLoad Checkpoint[0m
+[32mRunning Inference[0m
